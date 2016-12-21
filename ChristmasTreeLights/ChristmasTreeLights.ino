@@ -5,10 +5,10 @@
   through the network.
 
   created 10 Dec 2016
-  by Javier Fern√°ndez <jfercep@gmail.com>
+  by Javier Fern·ndez <jfercep@gmail.com>
 
 
-  basaed on this example from Arduino guys:
+  based on this example from Arduino guys:
 
   http://arduino.cc/en/Tutorial/WiFiRTC
 */
@@ -42,7 +42,20 @@ int Count3;
 String inputString = "";         // a string to hold incoming data
 boolean stringComplete = false;  // whether the string is complete
 
+String httpCommand = "";
+boolean httpCommandComplete = false;
 
+boolean pollingEnabled = false;
+boolean breakLoop = false;
+
+char command[] = "www.javisfryingchips.com";    // name address for host (using DNS)
+
+// Initialize the Ethernet client library
+// with the IP address and port of the server
+// that you want to connect to (port 80 is default for HTTP):
+WiFiClient commandClient;
+
+// Serever is created to received commands through a direct socket
 WiFiServer server(10002);
 
 const int GMT = 1; //change this to adapt it to your time zone
@@ -205,6 +218,12 @@ void loop() {
           startSequenceTime = millis();
           client.println("I don't know what I'm doing...");
           break;
+        case 'j':
+          pollingEnabled = true;
+          break;
+        case 'k':
+          pollingEnabled = false;
+          break;
         case 'x':
           // close the connection:
           client.stop();
@@ -322,6 +341,95 @@ void loop() {
   {
     digitalWrite(IsAlife, digitalRead(IsAlife) ^ 1);
     startAlifeTime = millis();
+
+    if (pollingEnabled)
+    {
+#ifdef DEBUG
+      client.println("\nStarting connection to server...");
+#endif
+      // if you get a connection, report back via serial:
+      if (commandClient.connect(command, 80)) {
+#ifdef DEBUG
+        client.println("connected to server");
+#endif
+        // Make a HTTP request:
+        commandClient.println("GET /comando.txt HTTP/1.1");
+        commandClient.println("Host: www.javisfryingchips.com");
+        commandClient.println("Connection: close");
+        commandClient.println();
+
+        long LocalTimeout = millis();
+        while ( millis() - LocalTimeout < 10000)
+        {
+
+          while (commandClient.available() ) {
+            char c = commandClient.read();
+#ifdef DEBUG
+            client.write(c);
+#endif
+            httpCommand += c;
+
+            if (httpCommandComplete)
+            {
+              int lightSeq = httpCommand.toInt();
+              switch (lightSeq)
+              {
+                case 0:
+                  sequence = 0;
+                  LedAnalogValue1 = 0;
+                  LedAnalogValue2 = 0;
+                  client.println("I'm off!");
+                  break;
+                case 1:
+                  sequence = 0;
+                  LedAnalogValue1 = 255;
+                  LedAnalogValue2 = 255;
+                  client.println("I'm on!");
+                  break;
+                case 2:
+                  sequence = 2;
+                  LedAnalogValue1 = 255;
+                  LedAnalogValue2 = 0;
+                  startSequenceTime = millis();
+                  client.println("Simple sequence!");
+                  break;
+                case 3:
+                  break;
+                default:
+                  break;
+              }
+              httpCommand = "";
+              breakLoop = true;
+              httpCommandComplete = false;
+            }
+
+            if (c == '\n')
+            {
+              if (httpCommand.length() == 2)
+              {
+                httpCommandComplete = true;
+              }
+              httpCommand = "";
+            }
+          }
+          if (breakLoop)
+          {
+            breakLoop = false;
+            break;
+          }
+        }
+#ifdef DEBUG
+        client.println("disconnecting from server.");
+#endif
+        commandClient.stop();
+      }
+#ifdef DEBUG
+      else
+      {
+        client.println("\nFail!");
+      }
+#endif
+    }
   }
 }
 
