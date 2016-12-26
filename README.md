@@ -1,5 +1,5 @@
 # ChristmasTreeIoT
-Christmas Tree lights controlled by an Arduino MKR1000 board
+Christmas Tree lights controlled by an Arduino MKR1000 board: http://javisfryingchips.com/
 
 ## How to connect your low cost Christmas lights to internet ##
 
