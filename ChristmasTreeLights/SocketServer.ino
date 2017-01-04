@@ -3,8 +3,11 @@ WiFiServer server(10002);
 WiFiClient SocketClient;
 
 String inputString = "";         // a string to hold incoming data
+bool isChatEnabled;
+
 void SocketServerSetup(void)
 {
+  isChatEnabled = false;
   // Init server
   server.begin();
 }
@@ -39,17 +42,35 @@ String SocketServerUpdate(void)
 
 void SocketServerReply(String msg)
 {
-  if (SocketClient.connected())
+  if (isChatEnabled)
   {
-    SocketClient.println(msg);
+    if (SocketClient)
+    {
+      if (SocketClient.connected())
+      {
+        SocketClient.println(msg);
+      }
+    }
   }
 }
 
 void SocketServerStop(void)
 {
-  if (SocketClient.connected())
+  if (SocketClient)
   {
-    SocketClient.stop();
+    if (SocketClient.connected())
+    {
+      SocketClient.stop();
+    }
   }
 }
 
+void SocketServerChatEnable(void)
+{
+  isChatEnabled = true;
+}
+
+void SocketServerChatDisable(void)
+{
+  isChatEnabled = false;
+}

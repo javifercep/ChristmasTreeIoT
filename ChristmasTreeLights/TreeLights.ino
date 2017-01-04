@@ -104,9 +104,9 @@ void TreeLightsUpdate(void)
       }
       break;
     case 4:
-      if (millis() - startSequenceTime > 200)
+      if (millis() - startSequenceTime > 100)
       {
-        if (LEDgroupIntensity1 == 0)
+        if (LEDgroupIntensity1 == 0.0)
         {
           LEDgroupIntensity1 = 100.0;
           LEDgroupIntensity2 = 0.0;
@@ -143,7 +143,7 @@ void TreeLightsUpdate(void)
       }
       break;
     case 6:
-      if (millis() - startSequenceTime > 200)
+      if (millis() - startSequenceTime > 100)
       {
         if ((variableTime < 10) && (variableTime > 0))
         {
@@ -163,7 +163,7 @@ void TreeLightsUpdate(void)
           if (LEDgroupIntensity2 == 0.0)
           {
             LEDgroupIntensity1 = 0.0;
-            LEDgroupIntensity2 = 1000.0;
+            LEDgroupIntensity2 = 100.0;
           }
           else
           {
@@ -214,7 +214,7 @@ void TreeLightsWrite(float LEDgroupIntensity1, float LEDgroupIntensity2)
     }
     else
     {
-      analogWrite(LEDGroup1, 50);
+      analogWrite(LEDGroup1, (int)LEDgroupIntensity1);
     }
     LastLEDIntensity1 = LEDgroupIntensity1;
   }
@@ -231,7 +231,7 @@ void TreeLightsWrite(float LEDgroupIntensity1, float LEDgroupIntensity2)
     }
     else
     {
-      analogWrite(LEDGroup2, 50);
+      analogWrite(LEDGroup2, (int)LEDgroupIntensity2);
     }
     LastLEDIntensity2 = LEDgroupIntensity2;
   }

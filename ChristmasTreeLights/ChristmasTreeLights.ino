@@ -115,6 +115,12 @@ void loop() {
         // close the connection:
         SocketServerStop();
         break;
+      case 'y':
+        SocketServerChatEnable();
+        break;
+      case 'z':
+        SocketServerChatDisable();
+        break;
       default:
         break;
     }
@@ -180,7 +186,7 @@ void WiFiSetup(void)
     rtc.setEpoch(epoch);
 
 #ifdef DEBUG
-    DebugPrint();
+    DebugPrint("");
 #endif
   }
 }

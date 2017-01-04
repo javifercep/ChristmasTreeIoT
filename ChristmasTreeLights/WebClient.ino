@@ -4,8 +4,10 @@ long startPollTime;
 String httpCommand = "";
 boolean httpCommandComplete = false;
 
-boolean pollingEnabled = false;
-boolean breakLoop = false;
+boolean pollingEnabled;
+boolean requestInProgress;
+
+long LocalTimeout;
 
 char command[] = "www.javisfryingchips.com";    // name address for Google (using DNS)
 
@@ -16,6 +18,8 @@ WiFiClient WebSocketClient;
 
 void WebClientSetup(int pollingTime)
 {
+  pollingEnabled = false;
+  requestInProgress = false;
   pollTime = pollingTime;
   startPollTime = millis();
 }
@@ -23,10 +27,10 @@ void WebClientSetup(int pollingTime)
 String WebClientUpdate(void)
 {
   String ret = "";
-  
+
   if (millis() - startPollTime > pollTime)
   {
-    if (pollingEnabled)
+    if (pollingEnabled && !requestInProgress)
     {
 #ifdef DEBUG
       SocketClient.println("\nStarting connection to server...");
@@ -41,45 +45,8 @@ String WebClientUpdate(void)
         WebSocketClient.println("Host: www.javisfryingchips.com");
         WebSocketClient.println("Connection: close");
         WebSocketClient.println();
-
-        long LocalTimeout = millis();
-        while ( millis() - LocalTimeout < 10000)
-        {
-
-          while (WebSocketClient.available() ) {
-            char c = WebSocketClient.read();
-#ifdef DEBUG
-            SocketClient.write(c);
-#endif
-            httpCommand += c;
-
-            if (httpCommandComplete)
-            {
-              ret = httpCommand;
-              httpCommand = "";
-              breakLoop = true;
-              httpCommandComplete = false;
-            }
-
-            if (c == '\n')
-            {
-              if (httpCommand.length() == 2)
-              {
-                httpCommandComplete = true;
-              }
-              httpCommand = "";
-            }
-          }
-          if (breakLoop)
-          {
-            breakLoop = false;
-            break;
-          }
-        }
-#ifdef DEBUG
-        SocketClient.println("disconnecting from server.");
-#endif
-        WebSocketClient.stop();
+        requestInProgress = true;
+        LocalTimeout = millis();
       }
 #ifdef DEBUG
       else
@@ -87,6 +54,41 @@ String WebClientUpdate(void)
         SocketClient.println("\nFail!");
       }
 #endif
+    }
+  }
+
+  if (requestInProgress)
+  {
+    if ( millis() - LocalTimeout < 10000)
+    {
+      if (WebSocketClient.available() ) {
+        char c = WebSocketClient.read();
+#ifdef DEBUG
+        SocketClient.write(c);
+#endif
+        httpCommand += c;
+
+        if (httpCommandComplete)
+        {
+          ret = httpCommand;
+          httpCommand = "";
+          requestInProgress = false;
+          httpCommandComplete = false;
+#ifdef DEBUG
+          SocketClient.println("disconnecting from server.");
+#endif
+          WebSocketClient.stop();
+        }
+
+        if (c == '\n')
+        {
+          if (httpCommand.length() == 2)
+          {
+            httpCommandComplete = true;
+          }
+          httpCommand = "";
+        }
+      }
     }
   }
   return ret;
